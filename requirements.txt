@@ -1,0 +1,9 @@
+scrapling[fetchers]
+openai
+pandas
+python-whois
+requests
+tqdm
+tenacity
+dnspython
+colorama

@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LeadFinder — Precision Architect</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  darkMode:"class",
+  theme:{extend:{
+    colors:{
+      "primary":"#46f6c1","on-primary":"#003829","primary-container":"#00d9a6",
+      "on-primary-container":"#005942","secondary":"#c6c0ff","secondary-container":"#3f2bb8",
+      "on-secondary-container":"#b3acff","tertiary":"#63f789","surface":"#111319",
+      "surface-container-lowest":"#0c0e14","surface-container-low":"#191b22",
+      "surface-container":"#1e1f26","surface-container-high":"#282a30",
+      "surface-container-highest":"#33343b","on-surface":"#e2e2eb",
+      "on-surface-variant":"#bacac1","outline-variant":"#3b4a43",
+      "outline":"#84948c","error":"#ffb4ab","error-container":"#93000a",
+      "surface-bright":"#373940","surface-variant":"#33343b","background":"#111319"
+    },
+    borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"}
+  }}
+}
+</script>
+<style>
+  body{font-family:'Inter',sans-serif}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle}
+  ::-webkit-scrollbar{width:5px}
+  ::-webkit-scrollbar-track{background:#111319}
+  ::-webkit-scrollbar-thumb{background:#33343b;border-radius:10px}
+  .no-scrollbar::-webkit-scrollbar{display:none}
+  /* Screen routing */
+  .screen{display:none}
+  .screen.active{display:flex;flex:1;flex-direction:column}
+  /* Nav active state */
+  .nav-item.active{color:#46f6c1 !important;border-left:2px solid #46f6c1;background:#191b22;padding-left:22px}
+  /* Animations */
+  @keyframes pulse-glow{0%,100%{opacity:1}50%{opacity:.5}}
+  @keyframes spin-slow{to{transform:rotate(360deg)}}
+  @keyframes slide-down{from{transform:translateY(-6px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .animate-spin-slow{animation:spin-slow 2s linear infinite}
+  .animate-slide-down{animation:slide-down .25s ease forwards}
+  /* Custom range input */
+  .range{-webkit-appearance:none;width:100%;height:4px;background:#33343b;outline:none;border-radius:2px}
+  .range::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:#46f6c1;cursor:pointer;border-radius:50%}
+  /* Node pills */
+  .np{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:11px;font-weight:600;flex-shrink:0}
+  .np-done{background:rgba(99,247,137,.12);color:#63f789;border:1px solid rgba(99,247,137,.3)}
+  .np-active{background:rgba(70,246,193,.12);color:#46f6c1;border:1px solid rgba(70,246,193,.35);animation:pulse-glow 1.5s infinite}
+  .np-ai{background:rgba(198,192,255,.12);color:#c6c0ff;border:1px solid rgba(198,192,255,.35);animation:pulse-glow 1.5s infinite}
+  .np-idle{background:#1e1f26;color:rgba(186,202,193,.3);border:1px solid rgba(59,74,67,.3)}
+  .np-skip{background:rgba(59,74,67,.15);color:rgba(186,202,193,.2);border:1px solid rgba(59,74,67,.15)}
+  .cx{height:1px;width:14px;flex-shrink:0}
+  .cx-done{background:rgba(70,246,193,.25)}
+  .cx-idle{background:rgba(59,74,67,.3)}
+  /* Toggle */
+  .tog-on{background:rgba(70,246,193,.2);border:1px solid rgba(70,246,193,.3)}
+  .tog-off{background:#33343b;border:1px solid rgba(59,74,67,.3)}
+  /* Glow button */
+  .glow{box-shadow:0 0 30px rgba(70,246,193,.15)}
+  .glow:hover{box-shadow:0 0 45px rgba(70,246,193,.25)}
+  /* Ghost border */
+  .gb{border:1px solid rgba(132,148,140,.12)}
+</style>
+</head>
+<body class="bg-surface text-on-surface antialiased h-screen overflow-hidden flex">
+
+<!-- ══════════════════════════════════
+     SIDEBAR
+══════════════════════════════════ -->
+<aside class="w-[220px] h-screen sticky top-0 flex flex-col justify-between py-6 bg-[#111319] border-r border-outline-variant/10 z-50">
+  <div>
+    <!-- Logo -->
+    <div class="px-6 mb-8 flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center">
+        <span class="material-symbols-outlined text-on-primary-container text-sm" style="font-variation-settings:'FILL' 1">rocket_launch</span>
+      </div>
+      <div>
+        <div class="text-[17px] font-bold tracking-tighter text-on-surface">LeadFinder</div>
+        <div class="text-[9px] uppercase tracking-[.18em] text-on-surface-variant/50 mt-0.5">Precision Architect</div>
+      </div>
+    </div>
+    <!-- Nav -->
+    <nav class="space-y-0.5 px-0">
+      <a onclick="go('dashboard')" data-screen="dashboard" class="nav-item flex items-center gap-3 text-on-surface-variant pl-6 py-2.5 cursor-pointer transition-all hover:bg-surface-container hover:text-on-surface text-sm">
+        <span class="material-symbols-outlined text-[18px]">dashboard</span>Dashboard
+      </a>
+      <a onclick="go('campaign')" data-screen="campaign" class="nav-item flex items-center gap-3 text-on-surface-variant pl-6 py-2.5 cursor-pointer transition-all hover:bg-surface-container hover:text-on-surface text-sm">
+        <span class="material-symbols-outlined text-[18px]">campaign</span>Campaigns
+      </a>
+      <a onclick="go('monitor')" data-screen="monitor" class="nav-item flex items-center gap-3 text-on-surface-variant pl-6 py-2.5 cursor-pointer transition-all hover:bg-surface-container hover:text-on-surface text-sm">
+        <span class="material-symbols-outlined text-[18px]">radar</span>Monitor
+      </a>
+      <a onclick="go('results')" data-screen="results" class="nav-item flex items-center gap-3 text-on-surface-variant pl-6 py-2.5 cursor-pointer transition-all hover:bg-surface-container hover:text-on-surface text-sm">
+        <span class="material-symbols-outlined text-[18px]">analytics</span>Results
+      </a>
+      <a onclick="go('settings')" data-screen="settings" class="nav-item flex items-center gap-3 text-on-surface-variant pl-6 py-2.5 cursor-pointer transition-all hover:bg-surface-container hover:text-on-surface text-sm">
+        <span class="material-symbols-outlined text-[18px]">settings</span>Settings
+      </a>
+    </nav>
+    <div class="mt-8 px-4">
+      <button onclick="go('campaign')" class="w-full bg-primary-container text-on-primary text-xs font-semibold py-2 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+        <span class="material-symbols-outlined text-sm">add</span>New Campaign
+      </button>
+    </div>
+  </div>
+  <!-- Integrations status -->
+  <div class="px-4 space-y-2">
+    <div class="text-[9px] uppercase tracking-widest text-on-surface-variant/40 font-bold px-2 mb-2">Integrations</div>
+    <div class="flex items-center gap-2 px-2 py-1 text-xs text-on-surface-variant">
+      <span class="material-symbols-outlined text-[15px]">memory</span>NVIDIA AI
+      <span class="ml-auto w-1.5 h-1.5 rounded-full bg-primary" style="box-shadow:0 0 6px rgba(70,246,193,.6)"></span>
+    </div>
+    <div class="flex items-center gap-2 px-2 py-1 text-xs text-on-surface-variant">
+      <span class="material-symbols-outlined text-[15px]">web</span>SpiderFoot
+      <span class="ml-auto w-1.5 h-1.5 rounded-full bg-primary" style="box-shadow:0 0 6px rgba(70,246,193,.6)"></span>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════════════════════
+     CONTENT WRAPPER
+══════════════════════════════════ -->
+<div class="flex-1 flex flex-col overflow-hidden">
+
+  <!-- TOP BAR -->
+  <header class="h-14 flex-shrink-0 flex justify-between items-center px-6 bg-[#111319]/80 backdrop-blur-md border-b border-outline-variant/10 z-40">
+    <div class="flex items-center gap-5">
+      <span id="hd-title" class="text-sm font-bold text-on-surface">Dashboard</span>
+      <div class="w-px h-4 bg-outline-variant/30"></div>
+      <nav class="flex gap-5 text-xs font-medium">
+        <a class="text-primary font-semibold">Live</a>
+        <a class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Logs</a>
+        <a class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer">Analytics</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="p-1.5 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">pause_circle</span></button>
+      <button class="p-1.5 text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-[20px]">stop_circle</span></button>
+      <div class="w-px h-4 bg-outline-variant/20"></div>
+      <button class="px-3 py-1.5 text-xs font-medium border border-outline-variant/20 rounded text-on-surface-variant hover:border-primary/40 hover:text-primary transition-all">Export CSV</button>
+      <button onclick="go('monitor')" class="px-3 py-1.5 text-xs font-semibold bg-primary-container text-on-primary rounded hover:opacity-90 transition-opacity">Run Campaign</button>
+    </div>
+  </header>
+
+  <!-- ══ SCREEN: DASHBOARD ══ -->
+  <div id="s-dashboard" class="screen active overflow-y-auto p-5 space-y-5 no-scrollbar">
+    <div class="grid grid-cols-4 gap-4">
+      <div class="bg-surface-container-low p-4 rounded-xl border-l-2 border-primary gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Active Campaigns</p><p class="text-3xl font-bold mt-1">3</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl border-l-2 border-tertiary gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Total Emails</p><p class="text-3xl font-bold mt-1 text-tertiary">18,432</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl border-l-2 border-secondary gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Verified Valid</p><p class="text-3xl font-bold mt-1 text-secondary">14,891</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl border-l-2 border-outline-variant gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">URLs Processed</p><p class="text-3xl font-bold mt-1">25,000</p></div>
+    </div>
+    <div class="grid grid-cols-3 gap-4">
+      <div onclick="go('monitor')" class="col-span-2 bg-surface-container p-5 rounded-xl gb cursor-pointer hover:border-primary/30 group transition-all">
+        <div class="flex justify-between items-start mb-4">
+          <div><p class="text-[9px] uppercase tracking-widest text-primary font-bold mb-1">Now Running</p><h3 class="text-base font-bold">Fortune 500 Outreach Q3</h3></div>
+          <span class="material-symbols-outlined text-primary group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+        </div>
+        <div class="h-2 bg-surface-container-highest rounded-full overflow-hidden mb-2">
+          <div class="h-full rounded-full bg-gradient-to-r from-primary/40 via-primary to-primary-container" style="width:47%;box-shadow:0 0 10px rgba(70,246,193,.4)"></div>
+        </div>
+        <div class="flex justify-between text-xs text-on-surface-variant">
+          <span>2,450 / 5,200 URLs — <span class="text-primary font-medium">47.1%</span></span>
+          <span>~4h 12m remaining</span>
+        </div>
+      </div>
+      <div class="bg-surface-container p-5 rounded-xl gb">
+        <p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold mb-4">Node Hit Rate</p>
+        <div class="space-y-2.5 text-xs">
+          <div class="flex items-center gap-2"><span class="text-on-surface-variant w-14">Node 1</span><div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-tertiary" style="width:38%"></div></div><span class="text-tertiary font-mono w-8 text-right">38%</span></div>
+          <div class="flex items-center gap-2"><span class="text-on-surface-variant w-14">Node 2</span><div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-primary" style="width:22%"></div></div><span class="text-primary font-mono w-8 text-right">22%</span></div>
+          <div class="flex items-center gap-2"><span class="text-on-surface-variant w-14">Node 4 AI</span><div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-secondary" style="width:18%"></div></div><span class="text-secondary font-mono w-8 text-right">18%</span></div>
+          <div class="flex items-center gap-2"><span class="text-on-surface-variant w-14">Node 5</span><div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-primary" style="width:14%"></div></div><span class="text-primary font-mono w-8 text-right">14%</span></div>
+          <div class="flex items-center gap-2"><span class="text-on-surface-variant w-14">Node 9</span><div class="flex-1 h-1.5 bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-error/60" style="width:8%"></div></div><span class="text-error/80 font-mono w-8 text-right">8%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-3 gap-4">
+      <div class="bg-surface-container-low p-4 rounded-xl gb">
+        <div class="flex justify-between items-start mb-2"><div><p class="text-xs font-semibold">SaaS Founders MENA</p><p class="text-[10px] text-on-surface-variant mt-0.5">Completed</p></div><span class="text-[9px] px-2 py-0.5 bg-tertiary/10 text-tertiary rounded font-bold">DONE</span></div>
+        <p class="text-sm text-on-surface-variant">1,200 URLs · <span class="text-tertiary">891 emails</span></p>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-xl gb">
+        <div class="flex justify-between items-start mb-2"><div><p class="text-xs font-semibold">EU Fintech Directors</p><p class="text-[10px] text-on-surface-variant mt-0.5">Paused — 62%</p></div><span class="text-[9px] px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded font-bold">PAUSED</span></div>
+        <p class="text-sm text-on-surface-variant">3,000 URLs · <span class="text-primary">1,240 emails</span></p>
+      </div>
+      <div onclick="go('campaign')" class="bg-surface-container-low p-4 rounded-xl gb border-dashed border-outline-variant/30 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-primary/20 transition-all">
+        <span class="material-symbols-outlined text-on-surface-variant/40 text-3xl">add_circle</span>
+        <p class="text-xs text-on-surface-variant/50">New Campaign</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: CAMPAIGN SETUP ══ -->
+  <div id="s-campaign" class="screen overflow-hidden relative">
+    <div class="flex-1 overflow-y-auto p-6 space-y-5 no-scrollbar pb-32 max-w-3xl mx-auto w-full">
+      <div class="flex justify-between items-end">
+        <div><h2 class="text-lg font-bold">Target URL Setup</h2><p class="text-xs text-on-surface-variant mt-1">Paste URLs or upload a file — unlimited batch size.</p></div>
+        <span class="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-xs font-medium">2,450 URLs loaded</span>
+      </div>
+      <div class="relative">
+        <textarea class="w-full h-36 bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 text-on-surface placeholder:text-outline/50 focus:ring-1 focus:ring-primary focus:border-primary outline-none resize-none font-mono text-xs leading-relaxed" placeholder="https://company1.com&#10;https://company2.io&#10;...paste unlimited URLs">https://acme-corp.com
+https://stripe-payments.com
+https://bolt.io
+https://zapier.com</textarea>
+        <button class="absolute top-3 right-3 p-1.5 bg-surface-container rounded border border-outline-variant/20 text-on-surface-variant hover:text-primary transition-colors" title="Upload CSV/TXT">
+          <span class="material-symbols-outlined text-[15px]">upload_file</span>
+        </button>
+      </div>
+      <div class="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
+        <span class="material-symbols-outlined text-amber-500 text-[17px] flex-shrink-0">warning</span>
+        <div><span class="font-bold text-amber-400">Large batch detected</span> — ~14h estimated. Auto-saved every 10 URLs. Pause & resume anytime.</div>
+      </div>
+      <div class="flex items-center justify-between">
+        <button class="flex items-center gap-2 px-4 py-2 bg-surface-container border border-outline-variant/20 rounded-lg text-xs text-on-surface hover:border-primary/30 transition-colors">
+          <span class="material-symbols-outlined text-[15px]">check_circle</span>Validate URLs
+        </button>
+        <span class="text-xs text-on-surface-variant"><span class="text-primary font-semibold">2,447 valid</span> · <span class="text-error font-semibold">3 invalid</span></span>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Wait time -->
+        <div class="bg-surface-container-low p-5 rounded-xl gb">
+          <div class="flex items-center gap-2 mb-5"><span class="material-symbols-outlined text-primary text-[17px]">shield_person</span><h3 class="font-semibold text-sm">Anti-block wait time</h3></div>
+          <div class="space-y-4">
+            <div><div class="flex justify-between text-[9px] uppercase tracking-widest text-on-surface-variant mb-2"><span>Min wait</span><span class="text-primary font-mono">5s</span></div><input class="range" type="range" min="1" max="60" value="5"/></div>
+            <div><div class="flex justify-between text-[9px] uppercase tracking-widest text-on-surface-variant mb-2"><span>Max wait</span><span class="text-primary font-mono">30s</span></div><input class="range" type="range" min="10" max="120" value="30"/></div>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5 mt-5">
+            <button class="py-1.5 text-[9px] uppercase bg-surface-container-highest/30 border border-outline-variant/10 rounded text-on-surface-variant hover:border-primary/20">Quick</button>
+            <button class="py-1.5 text-[9px] uppercase bg-primary/10 border border-primary/30 text-primary rounded">Normal</button>
+            <button class="py-1.5 text-[9px] uppercase bg-surface-container-highest/30 border border-outline-variant/10 rounded text-on-surface-variant hover:border-primary/20">Safe</button>
+            <button class="py-1.5 text-[9px] uppercase bg-surface-container-highest/30 border border-outline-variant/10 rounded text-on-surface-variant hover:border-primary/20">Stealth</button>
+          </div>
+        </div>
+        <!-- Node + toggles -->
+        <div class="bg-surface-container-low p-5 rounded-xl gb">
+          <div class="flex items-center gap-2 mb-5"><span class="material-symbols-outlined text-primary text-[17px]">javascript</span><h3 class="font-semibold text-sm">Node config</h3></div>
+          <div><div class="flex justify-between text-[9px] uppercase tracking-widest text-on-surface-variant mb-2"><span>JS render wait</span><span class="text-primary font-mono">4s</span></div><input class="range" type="range" min="2" max="8" value="4"/></div>
+          <div class="mt-5 space-y-3">
+            <label class="flex items-center justify-between cursor-pointer"><div><p class="text-xs font-medium">SpiderFoot deep scan</p><p class="text-[10px] text-on-surface-variant">Node 9 — slower, thorough</p></div><div class="w-9 h-5 tog-on rounded-full relative"><div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary transition-all"></div></div></label>
+            <label class="flex items-center justify-between cursor-pointer"><div><p class="text-xs font-medium">LinkedIn scraper</p><p class="text-[10px] text-on-surface-variant">Nodes 7 & 8 — needs li_at</p></div><div class="w-9 h-5 tog-on rounded-full relative"><div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary transition-all"></div></div></label>
+            <label class="flex items-center justify-between cursor-pointer"><div><p class="text-xs font-medium">Cache results</p><p class="text-[10px] text-on-surface-variant">Skip re-processed domains</p></div><div class="w-9 h-5 tog-off rounded-full relative"><div class="absolute top-1 left-1 w-3 h-3 rounded-full bg-outline transition-all"></div></div></label>
+            <label class="flex items-center justify-between cursor-pointer"><div><p class="text-xs font-medium">Auto-resume</p><p class="text-[10px] text-on-surface-variant">Continue if interrupted</p></div><div class="w-9 h-5 tog-on rounded-full relative"><div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary transition-all"></div></div></label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Sticky CTA -->
+    <div class="absolute bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-xl border-t border-outline-variant/10 p-5 z-40">
+      <div class="max-w-3xl mx-auto flex flex-col items-center gap-2">
+        <button onclick="go('monitor')" class="w-full max-w-xl py-3.5 bg-primary-container text-on-primary rounded-xl font-bold flex items-center justify-center gap-3 glow transition-all active:scale-[.98] text-sm">
+          <span class="material-symbols-outlined text-[18px]">rocket_launch</span>START LEADFINDER CAMPAIGN
+        </button>
+        <div class="flex items-center gap-4 text-[10px] text-on-surface-variant">
+          <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">schedule</span>~8h 20m estimated</span>
+          <span class="w-1 h-1 bg-outline rounded-full opacity-40"></span>
+          <span>2,450 URLs</span>
+          <span class="w-1 h-1 bg-outline rounded-full opacity-40"></span>
+          <span>12s avg wait</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: LIVE MONITOR ══ -->
+  <div id="s-monitor" class="screen overflow-y-auto p-5 space-y-5 no-scrollbar">
+    <!-- Stats bar -->
+    <div class="grid grid-cols-5 gap-3">
+      <div class="bg-surface-container-low p-4 rounded-xl border-l-2 border-primary gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Total</p><p class="text-2xl font-bold mt-0.5">2,450</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl border-l-2 border-tertiary gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Done</p><p class="text-2xl font-bold mt-0.5 text-tertiary">47</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl border-l-2 border-secondary gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Emails</p><p class="text-2xl font-bold mt-0.5 text-secondary">31</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl border-l-2 border-error gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Failed</p><p class="text-2xl font-bold mt-0.5 text-error">3</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl border-l-2 border-outline-variant gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Remaining</p><p class="text-2xl font-bold mt-0.5 text-on-surface-variant/60">2,400</p></div>
+    </div>
+    <div class="grid grid-cols-12 gap-5">
+      <!-- Left: current processing -->
+      <div class="col-span-8 space-y-4">
+        <div class="bg-surface-container p-5 rounded-xl gb">
+          <div class="flex justify-between items-start mb-5">
+            <div><p class="text-[9px] uppercase tracking-widest text-primary font-bold mb-1">Now Processing</p><h4 class="text-lg font-bold flex items-center gap-2">acme-corp.com <span class="text-sm font-normal text-on-surface-variant">[47/2450]</span></h4></div>
+            <span class="material-symbols-outlined text-primary" style="animation:pulse-glow 1.5s infinite">radar</span>
+          </div>
+          <!-- Pipeline nodes -->
+          <div class="flex items-center gap-1 mb-5 overflow-x-auto pb-1 no-scrollbar">
+            <div class="np np-done" title="Node 1 — Website Scraper"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1">check</span></div>
+            <div class="cx cx-done"></div>
+            <div class="np np-done" title="Node 2 — theHarvester"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1">check</span></div>
+            <div class="cx cx-done"></div>
+            <div class="np np-done" title="Node 3 — Sherlock"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1">check</span></div>
+            <div class="cx cx-idle"></div>
+            <div class="np np-ai" title="Node 4 — NVIDIA AI (active)">4</div>
+            <div class="cx cx-idle"></div>
+            <div class="np np-idle" title="Node 5 — Mailmeteor Finder">5</div>
+            <div class="cx cx-idle"></div>
+            <div class="np np-idle" title="Node 6 — WHOIS">6</div>
+            <div class="cx cx-idle"></div>
+            <div class="np np-idle" title="Node 7 — LinkedIn Scraper">7</div>
+            <div class="cx cx-idle"></div>
+            <div class="np np-idle" title="Node 8 — Mailmeteor LinkedIn">8</div>
+            <div class="cx cx-idle"></div>
+            <div class="np np-idle" title="Node 9 — SpiderFoot">9</div>
+            <div class="cx cx-idle"></div>
+            <div class="np np-idle" title="Node 11 — Email Verifier">11</div>
+          </div>
+          <!-- Active node detail -->
+          <div class="bg-surface-container-lowest p-4 rounded-xl border border-secondary/10 flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-secondary animate-spin-slow text-2xl">motion_photos_on</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h5 class="text-xs font-semibold text-secondary">Node 4 — NVIDIA AI Extractor</h5>
+              <p class="text-[11px] text-on-surface-variant mt-0.5">Analyzing raw text · Identifying decision maker...</p>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-[10px] text-on-surface-variant font-mono">142ms</p>
+              <div class="h-1 w-20 bg-surface-container-high rounded-full overflow-hidden mt-1">
+                <div class="h-full bg-secondary rounded-full" style="width:65%;animation:pulse-glow 1s infinite"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Person found -->
+          <div class="mt-4 flex items-center justify-between p-3 bg-surface-container-low rounded-lg border border-outline-variant/5">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded bg-surface-container-high flex items-center justify-center text-xs font-bold text-primary">JD</div>
+              <div><p class="text-sm font-medium">Jane Doe — CEO</p><p class="text-[11px] text-primary/70">linkedin.com/in/janedoe</p></div>
+            </div>
+            <span class="material-symbols-outlined text-tertiary text-[17px]" style="font-variation-settings:'FILL' 1">verified_user</span>
+          </div>
+        </div>
+        <!-- Progress -->
+        <div class="bg-surface-container-low p-5 rounded-xl gb">
+          <div class="flex justify-between items-end mb-3">
+            <div><h3 class="text-sm font-semibold">Campaign Progress</h3><p class="text-xs text-on-surface-variant mt-0.5">47 of 2,450 — <span class="text-primary font-bold">1.9%</span></p></div>
+            <div class="text-right text-xs text-on-surface-variant"><p>Elapsed: <span class="text-on-surface font-mono">9m 24s</span></p><p>Remaining: <span class="text-on-surface font-mono">~8h 11m</span></p></div>
+          </div>
+          <div class="h-2.5 bg-surface-container-highest rounded-full overflow-hidden mb-4">
+            <div class="h-full rounded-full bg-gradient-to-r from-primary/40 via-primary to-primary-container" style="width:1.9%;box-shadow:0 0 10px rgba(70,246,193,.4)"></div>
+          </div>
+          <div class="flex justify-center">
+            <button class="flex items-center gap-2 px-5 py-1.5 bg-surface-container text-xs font-medium rounded-lg border border-outline-variant/20 hover:border-primary/30 transition-all">
+              <span class="material-symbols-outlined text-[15px]">pause_circle</span>Pause after current
+            </button>
+          </div>
+        </div>
+        <!-- Live table -->
+        <div class="bg-surface-container rounded-xl gb overflow-hidden">
+          <div class="px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+            <h3 class="text-xs font-bold flex items-center gap-2">Live Stream <span class="w-2 h-2 rounded-full bg-error" style="animation:pulse-glow 1s infinite"></span></h3>
+            <span class="text-[9px] text-on-surface-variant bg-surface-container-highest px-2 py-1 rounded">STREAMING</span>
+          </div>
+          <table class="w-full text-left text-xs">
+            <thead class="bg-surface-container-low text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">
+              <tr><th class="px-4 py-2.5">#</th><th class="px-4 py-2.5">Domain</th><th class="px-4 py-2.5">Name</th><th class="px-4 py-2.5">Role</th><th class="px-4 py-2.5">Found In</th><th class="px-4 py-2.5">Email</th><th class="px-4 py-2.5">Status</th></tr>
+            </thead>
+            <tbody class="divide-y divide-outline-variant/10">
+              <tr class="hover:bg-primary/5 transition-colors animate-slide-down">
+                <td class="px-4 py-3 text-on-surface-variant font-mono">47</td>
+                <td class="px-4 py-3 font-medium">acme-corp.com</td>
+                <td class="px-4 py-3">Jane Doe</td>
+                <td class="px-4 py-3 text-on-surface-variant">CEO</td>
+                <td class="px-4 py-3"><span class="bg-secondary/10 text-secondary text-[9px] font-bold px-2 py-0.5 rounded border border-secondary/20">Node 4</span></td>
+                <td class="px-4 py-3 font-mono text-primary">j.doe@acme-corp.com</td>
+                <td class="px-4 py-3 text-tertiary flex items-center gap-1"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1">check_circle</span>Valid</td>
+              </tr>
+              <tr class="hover:bg-primary/5 transition-colors">
+                <td class="px-4 py-3 text-on-surface-variant font-mono">46</td>
+                <td class="px-4 py-3 font-medium">bolt.io</td>
+                <td class="px-4 py-3">Marcus Aurel</td>
+                <td class="px-4 py-3 text-on-surface-variant">CTO</td>
+                <td class="px-4 py-3"><span class="bg-primary/10 text-primary text-[9px] font-bold px-2 py-0.5 rounded border border-primary/20">Node 1</span></td>
+                <td class="px-4 py-3 font-mono text-primary">marcus@bolt.io</td>
+                <td class="px-4 py-3 text-tertiary flex items-center gap-1"><span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' 1">check_circle</span>Valid</td>
+              </tr>
+              <tr class="hover:bg-primary/5 transition-colors opacity-60">
+                <td class="px-4 py-3 text-on-surface-variant font-mono">45</td>
+                <td class="px-4 py-3 font-medium">zapier.com</td>
+                <td class="px-4 py-3">Wade Wilson</td>
+                <td class="px-4 py-3 text-on-surface-variant">Ops</td>
+                <td class="px-4 py-3"><span class="bg-primary/10 text-primary text-[9px] font-bold px-2 py-0.5 rounded border border-primary/20">Node 1</span></td>
+                <td class="px-4 py-3 font-mono text-on-surface-variant">wade@zapier.com</td>
+                <td class="px-4 py-3 text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">info</span>Catch-all</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Right: countdown + log -->
+      <div class="col-span-4 space-y-4">
+        <div class="bg-surface-container p-5 rounded-xl gb flex flex-col items-center text-center">
+          <p class="text-[9px] uppercase tracking-[.2em] text-on-surface-variant font-bold mb-5">Next URL Starts In</p>
+          <div class="relative w-28 h-28 mb-5 flex items-center justify-center">
+            <svg class="w-full h-full -rotate-90" viewBox="0 0 112 112">
+              <circle cx="56" cy="56" r="48" fill="none" stroke="rgba(59,74,67,.4)" stroke-width="5"/>
+              <circle id="cd-ring" cx="56" cy="56" r="48" fill="none" stroke="#F59E0B" stroke-width="5" stroke-dasharray="301.6" stroke-dashoffset="100" stroke-linecap="round"/>
+            </svg>
+            <span id="cd-text" class="absolute text-2xl font-bold tracking-tighter text-amber-400">12s</span>
+          </div>
+          <p class="text-sm font-medium mb-1">stripe-payments.com</p>
+          <p class="text-[10px] text-on-surface-variant uppercase tracking-widest mb-4">Queue: 48 of 2,450</p>
+          <button onclick="skipWait()" class="px-4 py-1.5 text-xs font-semibold text-amber-400 border border-amber-500/20 rounded-lg hover:bg-amber-500/5 transition-colors">Skip wait</button>
+        </div>
+        <!-- Log -->
+        <div class="bg-surface-container-lowest rounded-xl gb overflow-hidden">
+          <div class="px-4 py-2.5 border-b border-outline-variant/10 flex items-center justify-between">
+            <span class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Activity Log</span>
+            <div class="flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-primary" style="animation:pulse-glow 1s infinite"></div><span class="text-[9px] text-primary font-bold">LIVE</span></div>
+          </div>
+          <div class="p-3 space-y-3">
+            <div class="border-l border-primary/30 pl-2.5 py-0.5"><p class="text-[9px] text-on-surface-variant font-mono mb-0.5">14:22:10 <span class="text-primary font-bold">NODE4</span></p><p class="text-[11px] text-on-surface">AI extracted: Jane Doe — CEO · high confidence</p></div>
+            <div class="border-l border-tertiary/30 pl-2.5 py-0.5"><p class="text-[9px] text-on-surface-variant font-mono mb-0.5">14:22:08 <span class="text-tertiary font-bold">SKIP</span></p><p class="text-[11px] text-on-surface-variant">⚡ Email found → jumping to Node 11</p></div>
+            <div class="border-l border-outline-variant/20 pl-2.5 py-0.5"><p class="text-[9px] text-on-surface-variant font-mono mb-0.5">14:22:05 <span class="text-on-surface-variant font-bold">NODE3</span></p><p class="text-[11px] text-on-surface-variant">Sherlock: linkedin.com/in/janedoe found</p></div>
+            <div class="border-l border-amber-500/20 pl-2.5 py-0.5 bg-amber-500/5"><p class="text-[9px] text-on-surface-variant font-mono mb-0.5">14:21:58 <span class="text-amber-400 font-bold">WAIT</span></p><p class="text-[11px] text-amber-200/70">⏱ 8s anti-block delay completed</p></div>
+            <div class="border-l border-error/20 pl-2.5 py-0.5 bg-error/5"><p class="text-[9px] text-error/70 font-mono mb-0.5">14:21:45 <span class="text-error font-bold">VALD</span></p><p class="text-[11px] text-error/70">3 malformed URLs at lines 142, 189, 2101</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: RESULTS ══ -->
+  <div id="s-results" class="screen overflow-y-auto p-5 space-y-5 no-scrollbar">
+    <div class="grid grid-cols-5 gap-3">
+      <div class="bg-surface-container-low p-4 rounded-xl gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Total</p><p class="text-2xl font-bold">12,482</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Found</p><p class="text-2xl font-bold text-primary">8,921</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl gb"><p class="text-[9px] uppercase tracking-widest text-tertiary font-bold mb-1">Valid</p><p class="text-2xl font-bold text-tertiary">7,102</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl gb"><p class="text-[9px] uppercase tracking-widest text-error font-bold mb-1">Invalid</p><p class="text-2xl font-bold text-error">1,419</p></div>
+      <div class="bg-surface-container-low p-4 rounded-xl gb"><p class="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">Not Found</p><p class="text-2xl font-bold text-on-surface-variant">3,561</p></div>
+    </div>
+    <!-- Confidence bar -->
+    <div class="bg-surface-container-low p-4 rounded-xl gb">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-[9px] font-bold uppercase tracking-widest">Confidence Breakdown</h3>
+        <div class="flex gap-4 text-[9px] font-medium uppercase">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-tertiary"></span>Very High</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span>High</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-secondary"></span>Medium</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-error/60"></span>Low</span>
+        </div>
+      </div>
+      <div class="h-3 w-full bg-surface-container-highest rounded-full flex overflow-hidden">
+        <div class="h-full bg-tertiary" style="width:45%"></div>
+        <div class="h-full bg-primary" style="width:25%"></div>
+        <div class="h-full bg-secondary" style="width:20%"></div>
+        <div class="h-full bg-error/60" style="width:10%"></div>
+      </div>
+    </div>
+    <!-- Filters -->
+    <div class="flex flex-wrap items-center gap-2 bg-surface-container-low p-3 rounded-xl gb">
+      <div class="relative flex-1 min-w-[180px]">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline text-[16px]">search</span>
+        <input class="w-full bg-surface-container-lowest border-none rounded-lg pl-9 pr-4 py-2 text-xs text-on-surface focus:ring-1 focus:ring-primary/40 outline-none" placeholder="Search domain or name..." type="text"/>
+      </div>
+      <select class="bg-surface-container-lowest border-none rounded-lg px-3 py-2 text-xs text-on-surface-variant focus:ring-1 focus:ring-primary/30 outline-none"><option>Status: All</option><option>Valid</option><option>Invalid</option><option>Not Found</option></select>
+      <select class="bg-surface-container-lowest border-none rounded-lg px-3 py-2 text-xs text-on-surface-variant focus:ring-1 focus:ring-primary/30 outline-none"><option>Confidence: All</option><option>High+</option><option>Very High</option></select>
+      <select class="bg-surface-container-lowest border-none rounded-lg px-3 py-2 text-xs text-on-surface-variant focus:ring-1 focus:ring-primary/30 outline-none"><option>Found in: All Nodes</option><option>Node 1–3</option><option>Node 4–6</option><option>Node 7–9</option></select>
+      <select class="bg-surface-container-lowest border-none rounded-lg px-3 py-2 text-xs text-on-surface-variant focus:ring-1 focus:ring-primary/30 outline-none"><option>Sort: Confidence ↓</option><option>Node found</option><option>Domain A–Z</option></select>
+    </div>
+    <!-- Table -->
+    <div class="bg-surface-container-low rounded-xl gb overflow-hidden">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-surface-container-high/40 text-[9px] uppercase tracking-widest text-on-surface-variant font-bold border-b border-outline-variant/10">
+          <tr><th class="py-3 px-4 w-8"><input type="checkbox" class="rounded bg-surface-container-lowest border-outline-variant accent-primary"/></th><th class="py-3 px-4">#</th><th class="py-3 px-4">Domain</th><th class="py-3 px-4">Name</th><th class="py-3 px-4">Role</th><th class="py-3 px-4">Email</th><th class="py-3 px-4">Found In</th><th class="py-3 px-4">Confidence</th><th class="py-3 px-4">Status</th><th class="py-3 px-4"></th></tr>
+        </thead>
+        <tbody class="divide-y divide-outline-variant/8 text-xs">
+          <tr class="group hover:bg-surface-bright transition-colors">
+            <td class="py-3 px-4"><input type="checkbox" checked class="rounded bg-surface-container-lowest border-outline-variant accent-primary"/></td>
+            <td class="py-3 px-4 text-on-surface-variant font-mono">001</td>
+            <td class="py-3 px-4 font-medium">nvidia.com</td>
+            <td class="py-3 px-4">Jensen Huang</td>
+            <td class="py-3 px-4 text-on-surface-variant">CEO & Founder</td>
+            <td class="py-3 px-4 font-mono text-primary">j.huang@nvidia.com</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-tertiary/10 text-tertiary text-[9px] font-bold">Node 1</span></td>
+            <td class="py-3 px-4 text-tertiary">★★★★</td>
+            <td class="py-3 px-4"><span class="flex items-center gap-1 text-tertiary"><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>Valid</span></td>
+            <td class="py-3 px-4 text-right"><div class="opacity-0 group-hover:opacity-100 flex gap-1.5 justify-end transition-opacity"><button class="p-1 bg-surface-container rounded hover:text-primary"><span class="material-symbols-outlined text-[13px]">content_copy</span></button><button class="p-1 bg-surface-container rounded hover:text-primary"><span class="material-symbols-outlined text-[13px]">open_in_new</span></button></div></td>
+          </tr>
+          <tr class="group hover:bg-surface-bright transition-colors">
+            <td class="py-3 px-4"><input type="checkbox" checked class="rounded bg-surface-container-lowest border-outline-variant accent-primary"/></td>
+            <td class="py-3 px-4 text-on-surface-variant font-mono">002</td>
+            <td class="py-3 px-4 font-medium">openai.com</td>
+            <td class="py-3 px-4">Sam Altman</td>
+            <td class="py-3 px-4 text-on-surface-variant">CEO</td>
+            <td class="py-3 px-4 font-mono text-primary">sam@openai.com</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-secondary/10 text-secondary text-[9px] font-bold">Node 4</span></td>
+            <td class="py-3 px-4 text-primary">★★★☆</td>
+            <td class="py-3 px-4"><span class="flex items-center gap-1 text-primary"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span>Valid</span></td>
+            <td class="py-3 px-4 text-right"><div class="opacity-0 group-hover:opacity-100 flex gap-1.5 justify-end transition-opacity"><button class="p-1 bg-surface-container rounded hover:text-primary"><span class="material-symbols-outlined text-[13px]">content_copy</span></button><button class="p-1 bg-surface-container rounded hover:text-primary"><span class="material-symbols-outlined text-[13px]">open_in_new</span></button></div></td>
+          </tr>
+          <tr class="group hover:bg-surface-bright transition-colors">
+            <td class="py-3 px-4"><input type="checkbox" class="rounded bg-surface-container-lowest border-outline-variant accent-primary"/></td>
+            <td class="py-3 px-4 text-on-surface-variant font-mono">003</td>
+            <td class="py-3 px-4 font-medium">stripe.com</td>
+            <td class="py-3 px-4">Patrick Collison</td>
+            <td class="py-3 px-4 text-on-surface-variant">Co-Founder</td>
+            <td class="py-3 px-4 font-mono text-on-surface-variant italic">verifying...</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-orange-500/10 text-orange-400 text-[9px] font-bold">Node 9</span></td>
+            <td class="py-3 px-4 text-error/70">★☆☆☆</td>
+            <td class="py-3 px-4"><span class="flex items-center gap-1 text-error"><span class="w-1.5 h-1.5 rounded-full bg-error"></span>Invalid</span></td>
+            <td class="py-3 px-4 text-right"><div class="opacity-0 group-hover:opacity-100 flex gap-1.5 justify-end transition-opacity"><button class="p-1 bg-surface-container rounded hover:text-primary"><span class="material-symbols-outlined text-[13px]">content_copy</span></button><button class="p-1 bg-surface-container rounded hover:text-primary"><span class="material-symbols-outlined text-[13px]">open_in_new</span></button></div></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="p-4 flex justify-between items-center text-xs text-on-surface-variant border-t border-outline-variant/10">
+        <p>Showing 1–10 of 12,482 results</p>
+        <div class="flex items-center gap-1.5">
+          <button class="p-1 bg-surface-container rounded gb"><span class="material-symbols-outlined text-[15px]">chevron_left</span></button>
+          <button class="px-2.5 py-1 bg-primary/10 text-primary rounded border border-primary/20 text-xs">1</button>
+          <button class="px-2.5 py-1 hover:bg-surface-bright rounded text-xs">2</button>
+          <button class="px-2.5 py-1 hover:bg-surface-bright rounded text-xs">3</button>
+          <span class="px-1 text-xs">···</span>
+          <button class="px-2.5 py-1 hover:bg-surface-bright rounded text-xs">1248</button>
+          <button class="p-1 bg-surface-container rounded gb"><span class="material-symbols-outlined text-[15px]">chevron_right</span></button>
+        </div>
+      </div>
+    </div>
+    <!-- Sticky bulk action bar -->
+    <div class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-surface-container-low/95 backdrop-blur-xl gb rounded-full px-7 py-3.5 flex items-center gap-6 shadow-2xl z-50">
+      <div class="flex items-center gap-2 pr-6 border-r border-outline-variant/20">
+        <span class="material-symbols-outlined text-primary text-[16px]">checklist</span>
+        <span class="text-sm font-bold">312 <span class="text-on-surface-variant font-normal text-xs">rows selected</span></span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="bg-primary text-on-primary px-5 py-2 rounded-full text-xs font-bold flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <span class="material-symbols-outlined text-[14px]">download</span>Export CSV
+        </button>
+        <button class="bg-surface-container-highest text-on-surface px-5 py-2 rounded-full text-xs font-bold flex items-center gap-2 gb hover:bg-surface-bright transition-colors">
+          <span class="material-symbols-outlined text-[14px]">terminal</span>Export JSON
+        </button>
+        <button class="text-error text-xs font-bold hover:underline">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN: SETTINGS ══ -->
+  <div id="s-settings" class="screen overflow-y-auto p-6 space-y-5 no-scrollbar">
+    <div class="max-w-4xl mx-auto w-full space-y-5">
+      <div><h2 class="text-lg font-bold">System Preferences</h2><p class="text-xs text-on-surface-variant mt-1">Configure your lead generation engine and API integrations.</p></div>
+      <!-- API Config -->
+      <div class="bg-surface-container-low p-5 rounded-xl gb">
+        <div class="flex justify-between items-start mb-5">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"><span class="material-symbols-outlined text-primary text-[18px]">api</span></div>
+            <div><h3 class="font-semibold text-sm">API Configuration</h3><div class="flex items-center gap-1.5 mt-0.5"><div class="w-1.5 h-1.5 rounded-full bg-primary" style="box-shadow:0 0 6px rgba(70,246,193,.6)"></div><span class="text-[9px] text-primary uppercase font-bold tracking-widest">Connected</span></div></div>
+          </div>
+          <button class="text-xs font-semibold px-3 py-1.5 bg-surface-container border border-outline-variant/20 rounded-lg hover:border-primary/30 transition-all">Test Connection</button>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div><label class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">NVIDIA API Key</label><div class="relative"><input type="password" value="nvapi-xxxxxxxxxxxxxxxxxxxx" class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-4 py-2.5 text-xs focus:border-primary/40 focus:ring-1 focus:ring-primary/10 outline-none transition-all font-mono"/><button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[16px]">visibility</span></button></div></div>
+          <div><label class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Model Selection</label><select class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-4 py-2.5 text-xs focus:border-primary/40 outline-none appearance-none"><option>meta/llama-3.1-70b-instruct</option><option>meta/llama-3.1-8b-instruct</option><option>mistral/mistral-large-latest</option></select></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-5">
+        <!-- LinkedIn -->
+        <div class="bg-surface-container-low p-5 rounded-xl gb">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-9 h-9 rounded-lg bg-blue-600/10 flex items-center justify-center"><span class="material-symbols-outlined text-blue-400 text-[18px]">link</span></div>
+            <div><h3 class="font-semibold text-sm">LinkedIn Automation</h3><div class="flex items-center gap-1.5 mt-0.5"><div class="w-1.5 h-1.5 rounded-full bg-error"></div><span class="text-[9px] text-error uppercase font-bold tracking-widest">Disconnected</span></div></div>
+          </div>
+          <label class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">li_at cookie</label>
+          <div class="relative mb-4"><input type="password" placeholder="Enter session cookie..." class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-4 py-2.5 text-xs focus:border-primary/40 outline-none transition-all font-mono"/><button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[16px]">visibility</span></button></div>
+          <div class="flex items-start gap-2 p-3 bg-error-container/15 border border-error/15 rounded-lg mb-4">
+            <span class="material-symbols-outlined text-error text-[15px] flex-shrink-0 mt-0.5">warning</span>
+            <p class="text-[10px] text-error/80 leading-relaxed">Use a dedicated secondary account to avoid session expiry or flagging.</p>
+          </div>
+          <button class="w-full text-xs font-semibold py-2.5 bg-surface-container border border-outline-variant/20 rounded-lg hover:border-primary/30 transition-all">Connect Account</button>
+        </div>
+        <!-- SpiderFoot -->
+        <div class="bg-surface-container-low p-5 rounded-xl gb">
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-9 h-9 rounded-lg bg-secondary/10 flex items-center justify-center"><span class="material-symbols-outlined text-secondary text-[18px]">web</span></div>
+            <div><h3 class="font-semibold text-sm">SpiderFoot OSINT</h3><div class="flex items-center gap-1.5 mt-0.5"><div class="w-1.5 h-1.5 rounded-full bg-primary" style="box-shadow:0 0 6px rgba(70,246,193,.6)"></div><span class="text-[9px] text-primary uppercase font-bold tracking-widest">Running</span></div></div>
+          </div>
+          <label class="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest block mb-2">Server URL</label>
+          <div class="flex gap-2 mb-5"><input type="text" value="127.0.0.1:5001" class="flex-1 bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-4 py-2.5 text-xs font-mono focus:border-primary/40 outline-none"/><button class="p-2.5 bg-surface-container border border-outline-variant/20 rounded-lg text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[16px]">open_in_new</span></button></div>
+          <div class="flex gap-3"><button class="flex-1 text-xs font-semibold py-2.5 bg-surface-container border border-outline-variant/20 rounded-lg hover:bg-surface-bright transition-all">Stop Server</button><button class="flex-1 text-xs font-semibold py-2.5 bg-primary-container text-on-primary rounded-lg hover:opacity-90">Restart</button></div>
+        </div>
+      </div>
+      <!-- Wait times -->
+      <div class="bg-surface-container-low p-5 rounded-xl gb">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="font-semibold text-sm flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[17px]">schedule</span>Throttling & Wait Times</h3>
+          <div class="flex gap-2">
+            <button class="px-3 py-1 text-[9px] font-bold bg-surface-container border border-outline-variant/20 rounded hover:border-primary/30 uppercase tracking-wider">Fast</button>
+            <button class="px-3 py-1 text-[9px] font-bold bg-primary/15 text-primary border border-primary/25 rounded uppercase tracking-wider">Balanced</button>
+            <button class="px-3 py-1 text-[9px] font-bold bg-surface-container border border-outline-variant/20 rounded hover:border-primary/30 uppercase tracking-wider">Safe</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-8">
+          <div><div class="flex justify-between text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-3"><label>Min Wait</label><span class="text-primary font-mono text-xs">5s</span></div><input type="range" class="range" min="1" max="60" value="5"/></div>
+          <div><div class="flex justify-between text-[9px] font-bold text-on-surface-variant uppercase tracking-widest mb-3"><label>Max Wait</label><span class="text-primary font-mono text-xs">30s</span></div><input type="range" class="range" min="10" max="120" value="30"/></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-5">
+        <!-- Cache -->
+        <div class="bg-surface-container-low p-5 rounded-xl gb">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-semibold text-sm flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[17px]">layers</span>Data Caching</h3>
+            <div class="w-9 h-5 tog-on rounded-full relative cursor-pointer"><div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary"></div></div>
+          </div>
+          <div class="text-3xl font-bold mb-1">847 <span class="text-sm font-normal text-on-surface-variant">domains cached</span></div>
+          <p class="text-xs text-on-surface-variant mb-5">Caching improves lookup speed by 84% for repeat runs.</p>
+          <button class="w-full text-xs font-bold py-2 border border-error/25 text-error rounded-lg hover:bg-error/5 transition-all uppercase tracking-widest">Clear Cache</button>
+        </div>
+        <!-- Performance -->
+        <div class="bg-surface-container-low p-5 rounded-xl gb">
+          <h3 class="font-semibold text-sm flex items-center gap-2 mb-5"><span class="material-symbols-outlined text-error/70 text-[17px]">speed</span>Engine Performance</h3>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between"><span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Auto-Resume On Restart</span><div class="w-9 h-5 tog-on rounded-full relative cursor-pointer"><div class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary"></div></div></div>
+            <div class="flex items-center justify-between gap-4"><span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Save Every N URLs</span><input type="number" value="10" class="w-14 bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-2 py-1.5 text-xs text-center focus:border-primary/40 outline-none"/></div>
+            <div class="flex items-center justify-between gap-4"><span class="text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Max Retries Per Node</span><input type="number" value="3" class="w-14 bg-surface-container-lowest border border-outline-variant/20 rounded-lg px-2 py-1.5 text-xs text-center focus:border-primary/40 outline-none"/></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end content wrapper -->
+
+<script>
+const titles = {dashboard:'Dashboard',campaign:'Campaign Setup',monitor:'Campaign Monitor',results:'Results & Export',settings:'Settings'};
+
+function go(id) {
+  // hide all screens
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  // show target
+  const el = document.getElementById('s-' + id);
+  if (el) el.classList.add('active');
+  // update nav
+  document.querySelectorAll('.nav-item').forEach(a => {
+    a.classList.remove('active');
+    if (a.dataset.screen === id) a.classList.add('active');
+  });
+  // update header title
+  document.getElementById('hd-title').textContent = titles[id] || id;
+}
+
+// countdown timer
+let secs = 12;
+setInterval(() => {
+  secs = secs > 0 ? secs - 1 : 30;
+  const t = document.getElementById('cd-text');
+  const r = document.getElementById('cd-ring');
+  if (t) t.textContent = secs + 's';
+  if (r) {
+    const pct = secs / 30;
+    r.setAttribute('stroke-dashoffset', (301.6 * (1 - pct)).toFixed(1));
+    r.setAttribute('stroke', secs <= 5 ? '#22c55e' : '#F59E0B');
+  }
+}, 1000);
+
+function skipWait() { secs = 0; }
+
+// set initial active nav
+go('monitor');
+</script>
+</body>
+</html>

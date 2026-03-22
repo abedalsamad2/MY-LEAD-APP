@@ -1,0 +1,22 @@
+{
+  "completed": [
+    "rhinoroofers.com"
+  ],
+  "results": [
+    {
+      "domain": "rhinoroofers.com",
+      "name": "Registration Private",
+      "role": null,
+      "linkedin": null,
+      "email": "not found",
+      "found_in_node": "",
+      "confidence": "none",
+      "format": "",
+      "professional": "",
+      "domain_check": "",
+      "mailbox": "",
+      "overall": "",
+      "node_summary": "Node 1 [failed]: No usable emails found on priority website pages | Node 2 [failed]: theHarvester did not return usable email candidates | Node 3 [failed]: Sherlock did not return email or LinkedIn candidates | Node 4 [failed]: AI could not identify a clear decision-maker name | Node 5 [skipped]: Skipped because no decision-maker name was available | Node 6 [failed]: WHOIS returned no usable decision-maker email | Node 7 [failed]: Public search did not find a LinkedIn profile | Node 8 [skipped]: Skipped because no LinkedIn profile was available | Node 9 [failed]: SpiderFoot returned no usable emails | Node 11 [skipped]: Skipped because no matched decision-maker email was found"
+    }
+  ]
+}
