@@ -1,7 +1,0 @@
-scrapling[fetchers]
-openai
-pandas
-requests
-tqdm
-tenacity
-colorama
